@@ -164,11 +164,18 @@ jobs:
           end
           FORMULA
 
-      - name: Push to homebrew-tap
+      - name: Configure SSH
         env:
-          HB_GITHUB_TOKEN: ${{ secrets.HB_GITHUB_TOKEN }}
+          HB_GITHUB_SSH_KEY: ${{ secrets.HB_GITHUB_SSH_KEY }}
         run: |
-          git clone "https://x-access-token:${HB_GITHUB_TOKEN}@github.com/understory-io/homebrew-tap.git" tap
+          mkdir -p ~/.ssh
+          echo "${HB_GITHUB_SSH_KEY}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Push to homebrew-tap
+        run: |
+          git clone git@github.com:understory-io/homebrew-tap.git tap
           mkdir -p tap/Formula
           cp understory-mcp.rb tap/Formula/understory-mcp.rb
           cd tap
