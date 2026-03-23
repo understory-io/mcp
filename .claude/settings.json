@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "understory": {
+      "command": "cargo",
+      "args": ["run", "--release", "--manifest-path", "/Users/kjuulh/git/github.com/understory-io/mcp/Cargo.toml"],
+      "envFile": "/Users/kjuulh/git/github.com/understory-io/mcp/.env.mcp"
+    }
+  }
+}
