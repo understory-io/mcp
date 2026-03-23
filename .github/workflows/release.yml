@@ -167,7 +167,7 @@ jobs:
 
       - uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{ secrets.HB_GITHUB_SSH_KEY }}
+          ssh-private-key: ${{ secrets.BREW_SSH_KEY }}
 
       - name: Push to homebrew-tap
         run: |
