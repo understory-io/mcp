@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
+use rmcp::ServerHandler;
 use rmcp::handler::server::tool::ToolRouter;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{Implementation, ServerCapabilities, ServerInfo, ToolsCapability};
 use rmcp::schemars;
 use rmcp::serde;
-use rmcp::ServerHandler;
 use rmcp::{tool, tool_handler, tool_router};
 use serde::Deserialize;
 
@@ -154,7 +154,9 @@ pub struct OrderSubresourceParams {
 
 #[tool_router]
 impl UnderstoryServer {
-    #[tool(description = "Get all bookings. Returns a paginated list of bookings with optional date filtering and sorting.")]
+    #[tool(
+        description = "Get all bookings. Returns a paginated list of bookings with optional date filtering and sorting."
+    )]
     async fn get_bookings(
         &self,
         Parameters(params): Parameters<ListWithDateParams>,
@@ -183,10 +185,7 @@ impl UnderstoryServer {
     }
 
     #[tool(description = "Get a booking by its ID.")]
-    async fn get_booking(
-        &self,
-        Parameters(params): Parameters<IdParam>,
-    ) -> Result<String, String> {
+    async fn get_booking(&self, Parameters(params): Parameters<IdParam>) -> Result<String, String> {
         self.client
             .get(&format!("/v1/bookings/{}", params.id), &[])
             .await
@@ -195,10 +194,7 @@ impl UnderstoryServer {
     }
 
     #[tool(description = "Get all tickets for a booking.")]
-    async fn get_tickets(
-        &self,
-        Parameters(params): Parameters<IdParam>,
-    ) -> Result<String, String> {
+    async fn get_tickets(&self, Parameters(params): Parameters<IdParam>) -> Result<String, String> {
         self.client
             .get(&format!("/v1/bookings/{}/tickets", params.id), &[])
             .await
@@ -206,7 +202,9 @@ impl UnderstoryServer {
             .map_err(|e| format!("{e:#}"))
     }
 
-    #[tool(description = "Create a new booking for an event. Requires event_id, customer details, locale, and items.")]
+    #[tool(
+        description = "Create a new booking for an event. Requires event_id, customer details, locale, and items."
+    )]
     async fn create_booking(
         &self,
         Parameters(params): Parameters<CreateBookingParams>,
@@ -227,7 +225,9 @@ impl UnderstoryServer {
             .map_err(|e| format!("{e:#}"))
     }
 
-    #[tool(description = "Get availability for a single event by its ID. Returns availability status and constraints.")]
+    #[tool(
+        description = "Get availability for a single event by its ID. Returns availability status and constraints."
+    )]
     async fn get_event_availability(
         &self,
         Parameters(params): Parameters<IdParam>,
@@ -239,7 +239,9 @@ impl UnderstoryServer {
             .map_err(|e| format!("{e:#}"))
     }
 
-    #[tool(description = "List event availability for an experience. Returns paginated availability info including remaining seats and constraints.")]
+    #[tool(
+        description = "List event availability for an experience. Returns paginated availability info including remaining seats and constraints."
+    )]
     async fn list_event_availability(
         &self,
         Parameters(params): Parameters<EventAvailabilityListParams>,
@@ -264,7 +266,9 @@ impl UnderstoryServer {
             .map_err(|e| format!("{e:#}"))
     }
 
-    #[tool(description = "Get all events for the company. Supports filtering by date range and experience.")]
+    #[tool(
+        description = "Get all events for the company. Supports filtering by date range and experience."
+    )]
     async fn get_events(
         &self,
         Parameters(params): Parameters<EventsListParams>,
@@ -293,10 +297,7 @@ impl UnderstoryServer {
     }
 
     #[tool(description = "Get an event by its ID.")]
-    async fn get_event(
-        &self,
-        Parameters(params): Parameters<IdParam>,
-    ) -> Result<String, String> {
+    async fn get_event(&self, Parameters(params): Parameters<IdParam>) -> Result<String, String> {
         self.client
             .get(&format!("/v1/events/{}", params.id), &[])
             .await
@@ -335,7 +336,9 @@ impl UnderstoryServer {
             .map_err(|e| format!("{e:#}"))
     }
 
-    #[tool(description = "Get information requests (additional questions) for an experience's booking flow.")]
+    #[tool(
+        description = "Get information requests (additional questions) for an experience's booking flow."
+    )]
     async fn get_information_requests(
         &self,
         Parameters(params): Parameters<ExperienceSubresourceParams>,
@@ -430,10 +433,7 @@ impl UnderstoryServer {
     }
 
     #[tool(description = "Get an order by its ID.")]
-    async fn get_order(
-        &self,
-        Parameters(params): Parameters<IdParam>,
-    ) -> Result<String, String> {
+    async fn get_order(&self, Parameters(params): Parameters<IdParam>) -> Result<String, String> {
         self.client
             .get(&format!("/v1/orders/{}", params.id), &[])
             .await
@@ -459,10 +459,7 @@ impl UnderstoryServer {
         Parameters(params): Parameters<OrderSubresourceParams>,
     ) -> Result<String, String> {
         self.client
-            .get(
-                &format!("/v1/orders/{}/transactions", params.order_id),
-                &[],
-            )
+            .get(&format!("/v1/orders/{}/transactions", params.order_id), &[])
             .await
             .map(format_json)
             .map_err(|e| format!("{e:#}"))
@@ -480,7 +477,9 @@ impl UnderstoryServer {
             .map_err(|e| format!("{e:#}"))
     }
 
-    #[tool(description = "Test authentication. Returns information about the current API user/company.")]
+    #[tool(
+        description = "Test authentication. Returns information about the current API user/company."
+    )]
     async fn who_am_i(&self) -> Result<String, String> {
         self.client
             .get("/v1/me", &[])
@@ -520,7 +519,9 @@ impl UnderstoryServer {
             .map_err(|e| format!("{e:#}"))
     }
 
-    #[tool(description = "Create a new webhook subscription. Returns the subscription with a secret key (shown only once).")]
+    #[tool(
+        description = "Create a new webhook subscription. Returns the subscription with a secret key (shown only once)."
+    )]
     async fn create_webhook_subscription(
         &self,
         Parameters(params): Parameters<CreateWebhookParams>,
@@ -540,7 +541,9 @@ impl UnderstoryServer {
             .map_err(|e| format!("{e:#}"))
     }
 
-    #[tool(description = "Update an existing webhook subscription's URL, event types, state, or metadata.")]
+    #[tool(
+        description = "Update an existing webhook subscription's URL, event types, state, or metadata."
+    )]
     async fn update_webhook_subscription(
         &self,
         Parameters(params): Parameters<UpdateWebhookParams>,
@@ -563,7 +566,9 @@ impl UnderstoryServer {
             .map_err(|e| format!("{e:#}"))
     }
 
-    #[tool(description = "Permanently delete a webhook subscription. Stops all webhook deliveries for it.")]
+    #[tool(
+        description = "Permanently delete a webhook subscription. Stops all webhook deliveries for it."
+    )]
     async fn delete_webhook_subscription(
         &self,
         Parameters(params): Parameters<DeleteWebhookParams>,

@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use reqwest::header::{HeaderMap, HeaderValue, ACCEPT_LANGUAGE, AUTHORIZATION};
+use reqwest::header::{ACCEPT_LANGUAGE, AUTHORIZATION, HeaderMap, HeaderValue};
 use serde::Deserialize;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -90,10 +90,7 @@ impl UnderstoryClient {
     pub async fn get(&self, path: &str, query: &[(String, String)]) -> Result<serde_json::Value> {
         let url = format!("{BASE_URL}{path}");
         let mut headers = self.auth_headers().await?;
-        headers.insert(
-            ACCEPT_LANGUAGE,
-            HeaderValue::from_static("en"),
-        );
+        headers.insert(ACCEPT_LANGUAGE, HeaderValue::from_static("en"));
 
         let resp = self
             .http
@@ -108,10 +105,7 @@ impl UnderstoryClient {
             self.invalidate_token().await;
             // Retry once
             let mut headers = self.auth_headers().await?;
-            headers.insert(
-                ACCEPT_LANGUAGE,
-                HeaderValue::from_static("en"),
-            );
+            headers.insert(ACCEPT_LANGUAGE, HeaderValue::from_static("en"));
             let resp = self
                 .http
                 .get(&url)
@@ -129,11 +123,7 @@ impl UnderstoryClient {
         resp.json().await.context("failed to parse response")
     }
 
-    pub async fn post(
-        &self,
-        path: &str,
-        body: serde_json::Value,
-    ) -> Result<serde_json::Value> {
+    pub async fn post(&self, path: &str, body: serde_json::Value) -> Result<serde_json::Value> {
         let url = format!("{BASE_URL}{path}");
         let headers = self.auth_headers().await?;
 
@@ -151,11 +141,7 @@ impl UnderstoryClient {
         resp.json().await.context("failed to parse response")
     }
 
-    pub async fn put(
-        &self,
-        path: &str,
-        body: serde_json::Value,
-    ) -> Result<serde_json::Value> {
+    pub async fn put(&self, path: &str, body: serde_json::Value) -> Result<serde_json::Value> {
         let url = format!("{BASE_URL}{path}");
         let headers = self.auth_headers().await?;
 
