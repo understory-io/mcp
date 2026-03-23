@@ -1,0 +1,49 @@
+[tasks.install]
+description = "Build and install understory-mcp to ~/.local/bin"
+run = """
+cargo build --release --locked
+mkdir -p ~/.local/bin
+cp target/release/understory-mcp ~/.local/bin/understory-mcp
+echo "Installed understory-mcp to ~/.local/bin/understory-mcp"
+"""
+
+[tasks.install-release]
+description = "Download and install the latest release from GitHub"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO="understory-io/mcp"
+BINARY="understory-mcp"
+INSTALL_DIR="${HOME}/.local/bin"
+
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m)
+
+case "${OS}" in
+  darwin) OS="apple-darwin" ;;
+  linux)  OS="unknown-linux-musl" ;;
+  *)      echo "Unsupported OS: ${OS}"; exit 1 ;;
+esac
+
+case "${ARCH}" in
+  x86_64|amd64) ARCH="x86_64" ;;
+  arm64|aarch64) ARCH="aarch64" ;;
+  *)             echo "Unsupported architecture: ${ARCH}"; exit 1 ;;
+esac
+
+TARGET="${ARCH}-${OS}"
+TAG=$(gh release view --repo "${REPO}" --json tagName -q .tagName)
+ASSET="${BINARY}-${TAG}-${TARGET}.tar.gz"
+
+echo "Downloading ${ASSET}..."
+gh release download "${TAG}" --repo "${REPO}" --pattern "${ASSET}" --dir /tmp
+tar xzf "/tmp/${ASSET}" -C /tmp
+
+mkdir -p "${INSTALL_DIR}"
+mv "/tmp/${BINARY}" "${INSTALL_DIR}/${BINARY}"
+chmod +x "${INSTALL_DIR}/${BINARY}"
+rm -f "/tmp/${ASSET}"
+
+echo "Installed ${BINARY} ${TAG} to ${INSTALL_DIR}/${BINARY}"
+"""
