@@ -107,3 +107,73 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release edit "${{ needs.create-release.outputs.tag }}" --draft=false
+
+  update-homebrew:
+    needs: [create-release, publish-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ needs.create-release.outputs.tag }}"
+          gh release download "${TAG}" --repo "${{ github.repository }}" --pattern "*.sha256" --dir checksums
+
+      - name: Generate formula
+        run: |
+          TAG="${{ needs.create-release.outputs.tag }}"
+          VERSION="${TAG#v}"
+          REPO="${{ github.repository }}"
+
+          get_sha() {
+            grep "$1" checksums/*.sha256 | awk '{print $1}'
+          }
+
+          SHA_DARWIN_ARM=$(get_sha "aarch64-apple-darwin")
+          SHA_LINUX_AMD=$(get_sha "x86_64-unknown-linux-gnu")
+          SHA_LINUX_ARM=$(get_sha "aarch64-unknown-linux-gnu")
+
+          cat > understory-mcp.rb << FORMULA
+          class UnderstoryMcp < Formula
+            desc "MCP server for the Understory API"
+            homepage "https://github.com/${REPO}"
+            version "${VERSION}"
+            license "Apache-2.0"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/${REPO}/releases/download/${TAG}/${BINARY_NAME}-${TAG}-aarch64-apple-darwin.tar.gz"
+                sha256 "${SHA_DARWIN_ARM}"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/${REPO}/releases/download/${TAG}/${BINARY_NAME}-${TAG}-aarch64-unknown-linux-gnu.tar.gz"
+                sha256 "${SHA_LINUX_ARM}"
+              end
+              on_intel do
+                url "https://github.com/${REPO}/releases/download/${TAG}/${BINARY_NAME}-${TAG}-x86_64-unknown-linux-gnu.tar.gz"
+                sha256 "${SHA_LINUX_AMD}"
+              end
+            end
+
+            def install
+              bin.install "${BINARY_NAME}"
+            end
+          end
+          FORMULA
+
+      - name: Push to homebrew-tap
+        env:
+          HB_GITHUB_TOKEN: ${{ secrets.HB_GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${HB_GITHUB_TOKEN}@github.com/understory-io/homebrew-tap.git" tap
+          mkdir -p tap/Formula
+          cp understory-mcp.rb tap/Formula/understory-mcp.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/understory-mcp.rb
+          git commit -m "Update understory-mcp to ${{ needs.create-release.outputs.tag }}"
+          git push
