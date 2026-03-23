@@ -169,7 +169,7 @@ jobs:
         id: app-token
         with:
           app-id: ${{ secrets.BREW_APP_ID }}
-          private-key: ${{ secrets.BREW_CLIENT_SECRET }}
+          private-key: ${{ secrets.BREW_SSH_KEY }}
           owner: understory-io
           repositories: homebrew-tap
 
