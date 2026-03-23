@@ -4,27 +4,42 @@ A Rust-based [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) se
 
 ## Prerequisites
 
-- Rust toolchain (1.80+)
 - An Understory integration key ([how to create one](https://developer.understory.io/docs/usage/authentication/integration-keys))
 
-## Setup
+## Installation
 
-### 1. Build
+### Homebrew (macOS / Linux)
+
+```bash
+brew install understory-io/tap/understory-mcp
+```
+
+### GitHub Releases
+
+Download the latest binary for your platform from the [releases page](https://github.com/understory-io/mcp/releases).
+
+Available platforms: macOS (ARM), Linux (x86_64, ARM), Windows (x86_64, ARM).
+
+### Build from source
+
+Requires Rust toolchain (1.80+).
 
 ```bash
 cargo build --release
 ```
 
-### 2. Configure credentials
+## Setup
 
-Create a `.env.mcp` file (gitignored):
+### 1. Configure credentials
+
+Create a `.env.mcp` file (gitignored) or export the variables in your shell:
 
 ```
 UNDERSTORY_CLIENT_ID=your_client_id
 UNDERSTORY_CLIENT_SECRET=your_secret_key
 ```
 
-### 3. Add to Claude Code
+### 2. Add to Claude Code
 
 Add the server to your Claude Code configuration (`~/.claude.json` or `.claude/settings.json`):
 
@@ -33,7 +48,7 @@ Add the server to your Claude Code configuration (`~/.claude.json` or `.claude/s
   "mcpServers": {
     "understory": {
       "type": "stdio",
-      "command": "/path/to/target/release/understory-mcp",
+      "command": "understory-mcp",
       "env": {
         "UNDERSTORY_CLIENT_ID": "your_client_id",
         "UNDERSTORY_CLIENT_SECRET": "your_secret_key"
@@ -50,7 +65,7 @@ Or using an env file:
   "mcpServers": {
     "understory": {
       "type": "stdio",
-      "command": "/path/to/target/release/understory-mcp",
+      "command": "understory-mcp",
       "envFile": "/path/to/.env.mcp"
     }
   }
