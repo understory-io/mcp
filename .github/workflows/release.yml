@@ -165,14 +165,17 @@ jobs:
           end
           FORMULA
 
-      - uses: webfactory/ssh-agent@v0.9.0
+      - uses: actions/create-github-app-token@v1
+        id: app-token
         with:
-          ssh-private-key: ${{ secrets.BREW_SSH_KEY }}
+          app-id: ${{ secrets.BREW_APP_ID }}
+          private-key: ${{ secrets.BREW_CLIENT_SECRET }}
+          owner: understory-io
+          repositories: homebrew-tap
 
       - name: Push to homebrew-tap
         run: |
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-          git clone git@github.com:understory-io/homebrew-tap.git tap
+          git clone "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/understory-io/homebrew-tap.git" tap
           mkdir -p tap/Formula
           cp understory-mcp.rb tap/Formula/understory-mcp.rb
           cd tap
