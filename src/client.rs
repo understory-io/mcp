@@ -4,6 +4,16 @@ use serde::Deserialize;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+/// Check response status and include the response body in the error message.
+async fn check_status(resp: reqwest::Response) -> Result<reqwest::Response> {
+    let status = resp.status();
+    if !status.is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        anyhow::bail!("API error ({status}): {body}");
+    }
+    Ok(resp)
+}
+
 const BASE_URL: &str = "https://api.understory.io";
 const TOKEN_URL: &str = "https://api.auth.understory.io/oauth2/token";
 
@@ -113,13 +123,12 @@ impl UnderstoryClient {
                 .query(query)
                 .send()
                 .await
-                .context("retry request failed")?
-                .error_for_status()
-                .context("API error on retry")?;
+                .context("retry request failed")?;
+            let resp = check_status(resp).await?;
             return resp.json().await.context("failed to parse response");
         }
 
-        let resp = resp.error_for_status().context("API error")?;
+        let resp = check_status(resp).await?;
         resp.json().await.context("failed to parse response")
     }
 
@@ -134,10 +143,9 @@ impl UnderstoryClient {
             .json(&body)
             .send()
             .await
-            .context("request failed")?
-            .error_for_status()
-            .context("API error")?;
+            .context("request failed")?;
 
+        let resp = check_status(resp).await?;
         resp.json().await.context("failed to parse response")
     }
 
@@ -152,10 +160,9 @@ impl UnderstoryClient {
             .json(&body)
             .send()
             .await
-            .context("request failed")?
-            .error_for_status()
-            .context("API error")?;
+            .context("request failed")?;
 
+        let resp = check_status(resp).await?;
         resp.json().await.context("failed to parse response")
     }
 
@@ -163,15 +170,15 @@ impl UnderstoryClient {
         let url = format!("{BASE_URL}{path}");
         let headers = self.auth_headers().await?;
 
-        self.http
+        let resp = self
+            .http
             .delete(&url)
             .headers(headers)
             .send()
             .await
-            .context("request failed")?
-            .error_for_status()
-            .context("API error")?;
+            .context("request failed")?;
 
+        check_status(resp).await?;
         Ok(())
     }
 }

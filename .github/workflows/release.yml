@@ -1,9 +1,8 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -13,22 +12,7 @@ env:
   BINARY_NAME: understory-mcp
 
 jobs:
-  create-release:
-    runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.tag.outputs.tag }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Get tag
-        id: tag
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-      - name: Create release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ steps.tag.outputs.tag }}" --draft --title "${{ steps.tag.outputs.tag }}" --generate-notes
-
   build:
-    needs: create-release
     strategy:
       fail-fast: false
       matrix:
@@ -57,7 +41,7 @@ jobs:
       - name: Package (unix)
         if: runner.os != 'Windows'
         run: |
-          tar czf ${BINARY_NAME}-${{ needs.create-release.outputs.tag }}-${{ matrix.target }}.tar.gz \
+          tar czf ${BINARY_NAME}-${{ github.event.release.tag_name }}-${{ matrix.target }}.tar.gz \
             -C target/${{ matrix.target }}/release ${BINARY_NAME}
 
       - name: Package (windows)
@@ -65,18 +49,18 @@ jobs:
         shell: pwsh
         run: |
           Compress-Archive -Path "target/${{ matrix.target }}/release/${env:BINARY_NAME}.exe" `
-            -DestinationPath "${env:BINARY_NAME}-${{ needs.create-release.outputs.tag }}-${{ matrix.target }}.zip"
+            -DestinationPath "${env:BINARY_NAME}-${{ github.event.release.tag_name }}-${{ matrix.target }}.zip"
 
       - name: Generate checksum (unix)
         if: runner.os != 'Windows'
-        run: shasum -a 256 ${BINARY_NAME}-${{ needs.create-release.outputs.tag }}-${{ matrix.target }}.tar.gz > ${BINARY_NAME}-${{ needs.create-release.outputs.tag }}-${{ matrix.target }}.tar.gz.sha256
+        run: shasum -a 256 ${BINARY_NAME}-${{ github.event.release.tag_name }}-${{ matrix.target }}.tar.gz > ${BINARY_NAME}-${{ github.event.release.tag_name }}-${{ matrix.target }}.tar.gz.sha256
 
       - name: Generate checksum (windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $hash = (Get-FileHash "${env:BINARY_NAME}-${{ needs.create-release.outputs.tag }}-${{ matrix.target }}.zip" -Algorithm SHA256).Hash.ToLower()
-          $file = "${env:BINARY_NAME}-${{ needs.create-release.outputs.tag }}-${{ matrix.target }}.zip"
+          $hash = (Get-FileHash "${env:BINARY_NAME}-${{ github.event.release.tag_name }}-${{ matrix.target }}.zip" -Algorithm SHA256).Hash.ToLower()
+          $file = "${env:BINARY_NAME}-${{ github.event.release.tag_name }}-${{ matrix.target }}.zip"
           "$hash  $file" | Out-File -Encoding ascii "${file}.sha256"
 
       - name: Upload to release (unix)
@@ -84,9 +68,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "${{ needs.create-release.outputs.tag }}" \
-            ${BINARY_NAME}-${{ needs.create-release.outputs.tag }}-${{ matrix.target }}.tar.gz \
-            ${BINARY_NAME}-${{ needs.create-release.outputs.tag }}-${{ matrix.target }}.tar.gz.sha256
+          gh release upload "${{ github.event.release.tag_name }}" \
+            ${BINARY_NAME}-${{ github.event.release.tag_name }}-${{ matrix.target }}.tar.gz \
+            ${BINARY_NAME}-${{ github.event.release.tag_name }}-${{ matrix.target }}.tar.gz.sha256
 
       - name: Upload to release (windows)
         if: runner.os == 'Windows'
@@ -94,34 +78,24 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          gh release upload "${{ needs.create-release.outputs.tag }}" `
-            "${env:BINARY_NAME}-${{ needs.create-release.outputs.tag }}-${{ matrix.target }}.zip" `
-            "${env:BINARY_NAME}-${{ needs.create-release.outputs.tag }}-${{ matrix.target }}.zip.sha256"
-
-  publish-release:
-    needs: [create-release, build]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Publish release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release edit "${{ needs.create-release.outputs.tag }}" --draft=false
+          gh release upload "${{ github.event.release.tag_name }}" `
+            "${env:BINARY_NAME}-${{ github.event.release.tag_name }}-${{ matrix.target }}.zip" `
+            "${env:BINARY_NAME}-${{ github.event.release.tag_name }}-${{ matrix.target }}.zip.sha256"
 
   update-homebrew:
-    needs: [create-release, publish-release]
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - name: Download checksums
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="${{ needs.create-release.outputs.tag }}"
+          TAG="${{ github.event.release.tag_name }}"
           gh release download "${TAG}" --repo "${{ github.repository }}" --pattern "*.sha256" --dir checksums
 
       - name: Generate formula
         run: |
-          TAG="${{ needs.create-release.outputs.tag }}"
+          TAG="${{ github.event.release.tag_name }}"
           VERSION="${TAG#v}"
           REPO="${{ github.repository }}"
 
@@ -181,5 +155,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/understory-mcp.rb
-          git commit -m "Update understory-mcp to ${{ needs.create-release.outputs.tag }}"
+          git commit -m "Update understory-mcp to ${{ github.event.release.tag_name }}"
           git push
