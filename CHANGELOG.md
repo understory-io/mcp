@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/understory-io/mcp/compare/v0.2.2...v0.2.3) (2026-03-24)
+
+
+### Bug Fixes
+
+* use GitHub App token for release-please to trigger release workflow ([e2b35b5](https://github.com/understory-io/mcp/commit/e2b35b599221df00fa617cc601eeb807b1db3f27))
+
 ## [0.2.2](https://github.com/understory-io/mcp/compare/v0.2.1...v0.2.2) (2026-03-24)
 
 
